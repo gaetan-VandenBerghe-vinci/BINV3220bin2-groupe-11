@@ -104,6 +104,23 @@ body {
   color: #4b5563;
 }
 
+.period-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 24rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.period-filter select {
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  font-weight: 400;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
 /* Tableaux */
 
 .table-wrapper {
