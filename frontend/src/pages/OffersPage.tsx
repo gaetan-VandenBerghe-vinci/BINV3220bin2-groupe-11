@@ -6,6 +6,9 @@ import OfferTable from "../components/OfferTable.tsx";
 import { useOffers } from "../hooks/useOffers.ts";
 import type { User } from "../models/user.ts";
 import type { PeriodCode } from "../models/offer.ts";
+import { applyToOffer, withdrawApplication } from "../services/offers.service.ts";
+import { useOfferDetails } from "../hooks/useOfferDetails.ts";
+import { isUnauthorized } from "../utils/api.ts";
 import { PERIOD_LABELS } from "../utils/labels.ts";
 
 interface OffersPageProps {
@@ -30,6 +33,43 @@ const PERIOD_OPTIONS: { value: "" | PeriodCode; label: string }[] = [
 const OffersPage = ({ user, token, onUnauthorized }: OffersPageProps) => {
   const [period, setPeriod] = useState<PeriodCode | undefined>(undefined);
   const { offers, isLoading, error } = useOffers(token, period, onUnauthorized);
+  const [selectedOfferId, setSelectedOfferId] = useState<number>();
+  const [message, setMessage] = useState("");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { offer: selectedOffer, isLoading: isDetailLoading, error: detailError } =
+    useOfferDetails(token, selectedOfferId, onUnauthorized);
+
+  const submitApplication = async () => {
+    if (selectedOfferId === undefined) return;
+    setIsSubmitting(true);
+    setActionError(null);
+    try {
+      await applyToOffer(token, selectedOfferId, message);
+      setMessage("");
+      setSelectedOfferId(undefined);
+    } catch (reason: unknown) {
+      if (isUnauthorized(reason)) onUnauthorized();
+      else if (reason instanceof Error) setActionError(reason.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const withdraw = async () => {
+    if (selectedOfferId === undefined) return;
+    setIsSubmitting(true);
+    setActionError(null);
+    try {
+      await withdrawApplication(token, selectedOfferId);
+      setSelectedOfferId(undefined);
+    } catch (reason: unknown) {
+      if (isUnauthorized(reason)) onUnauthorized();
+      else if (reason instanceof Error) setActionError(reason.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const renderContent = () => {
     if (error) return <ErrorState message={error} />;
@@ -40,7 +80,64 @@ const OffersPage = ({ user, token, onUnauthorized }: OffersPageProps) => {
         <p className="result-count">
           {offers.length} offre{offers.length > 1 ? "s" : ""}
         </p>
-        <OfferTable offers={offers} />
+        <OfferTable
+          offers={offers}
+          onSelect={user.kind === "STUDENT" ? setSelectedOfferId : undefined}
+        />
+        {user.kind === "STUDENT" && selectedOfferId !== undefined && (
+          <aside className="offer-details" aria-label="Détail de l’offre">
+            {isDetailLoading && <LoadingState />}
+            {detailError && <ErrorState message={detailError} />}
+            {selectedOffer && (
+              <>
+                <h2>{selectedOffer.title}</h2>
+                <p>{selectedOffer.description}</p>
+                {selectedOffer.application ? (
+                  <>
+                    <p>
+                      Candidature :{" "}
+                      {selectedOffer.application.status === "IN_PROGRESS"
+                        ? "En cours"
+                        : selectedOffer.application.status === "SELECTED"
+                          ? "Retenue"
+                          : "Refusée"}
+                    </p>
+                    {selectedOffer.application.status === "IN_PROGRESS" && (
+                      <button
+                        type="button"
+                        className="button button-secondary"
+                        disabled={isSubmitting}
+                        onClick={withdraw}
+                      >
+                        Retirer ma candidature
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <label className="application-message">
+                      <span>Message (facultatif)</span>
+                      <textarea
+                        value={message}
+                        maxLength={2000}
+                        onChange={(event) => setMessage(event.target.value)}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="button button-primary"
+                      disabled={isSubmitting}
+                      onClick={submitApplication}
+                    >
+                      Candidater
+                    </button>
+                  </>
+                )}
+                {actionError && <ErrorState message={actionError} />}
+              </>
+            )}
+          </aside>
+        )}
       </>
     );
   };

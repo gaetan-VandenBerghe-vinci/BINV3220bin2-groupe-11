@@ -1,4 +1,4 @@
-import { toOffer } from "../mappers/offer.mapper.ts";
+import { toOffer, toOfferDetails } from "../mappers/offer.mapper.ts";
 import type { Offer } from "../models/offer.ts";
 import type { User } from "../models/user.ts";
 import type { OfferFilter, OffersRepository } from "../repositories/offers.repository.ts";
@@ -19,6 +19,42 @@ const visibilityFilter = (viewer: User): OfferFilter => {
 export const createOffersService = (repository: OffersRepository) => ({
   listOffers: (viewer: User, period?: OfferFilter["period"]): Offer[] =>
     repository.findAll({ ...visibilityFilter(viewer), period }).map(toOffer),
+  getOfferDetails: (viewer: User, offerId: number) => {
+    if (!isStudent(viewer)) {
+      throw new HttpError(403, "FORBIDDEN", "Seuls les étudiants peuvent consulter ce détail");
+    }
+    const offer = repository.findDetailsForStudent({ offerId, studentId: viewer.id });
+    if (offer === undefined) {
+      throw new HttpError(404, "NOT_FOUND", "Offre publiée introuvable");
+    }
+    return toOfferDetails(offer);
+  },
+  applyToOffer: (viewer: User, offerId: number, message: string | null): void => {
+    if (!isStudent(viewer)) {
+      throw new HttpError(403, "FORBIDDEN", "Seuls les étudiants peuvent candidater");
+    }
+    const offer = repository.findDetailsForStudent({ offerId, studentId: viewer.id });
+    if (offer === undefined) {
+      throw new HttpError(404, "NOT_FOUND", "Offre publiée introuvable");
+    }
+    if (repository.findApplication({ offerId, studentId: viewer.id }) !== undefined) {
+      throw new HttpError(409, "APPLICATION_EXISTS", "Vous avez déjà traité cette offre");
+    }
+    repository.createApplication({ offerId, studentId: viewer.id, message });
+  },
+  withdrawApplication: (viewer: User, offerId: number): void => {
+    if (!isStudent(viewer)) {
+      throw new HttpError(403, "FORBIDDEN", "Seuls les étudiants peuvent retirer une candidature");
+    }
+    const application = repository.findApplication({ offerId, studentId: viewer.id });
+    if (application === undefined) {
+      throw new HttpError(404, "NOT_FOUND", "Candidature introuvable");
+    }
+    if (application.status !== "IN_PROGRESS") {
+      throw new HttpError(409, "APPLICATION_PROCESSED", "Cette candidature a déjà été traitée");
+    }
+    repository.deleteInProgressApplication({ offerId, studentId: viewer.id });
+  },
 });
 
 export type OffersService = ReturnType<typeof createOffersService>;

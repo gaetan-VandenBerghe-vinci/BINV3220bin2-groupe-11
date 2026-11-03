@@ -43,3 +43,34 @@ export interface OfferDto {
   period: PeriodCode;
   status: OfferStatus;
 }
+
+export const APPLICATION_STATUSES = ["IN_PROGRESS", "SELECTED", "REJECTED"] as const;
+
+export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
+
+export interface Application {
+  id: number;
+  message: string | null;
+  status: ApplicationStatus;
+  appliedAt: string;
+}
+
+export interface OfferDetails extends Offer {
+  application: Application | null;
+}
+
+export interface OfferDetailsDto {
+  id: number;
+  title: string;
+  description: string;
+  companyShortName: string;
+  academicYear: string;
+  period: PeriodCode;
+  status: "PUBLISHED";
+  application: {
+    id: number;
+    message: string | null;
+    status: ApplicationStatus;
+    appliedAt: string;
+  } | null;
+}

@@ -45,3 +45,18 @@ Authorization: {{depositor.response.body.token}}
 ### Erreur 403 : promotrice et signataire
 GET http://localhost:3000/offers
 Authorization: {{promoter.response.body.token}}
+
+### Détail d'une offre publiée pour l'étudiant
+GET http://localhost:3000/offers/3
+Authorization: {{student.response.body.token}}
+
+### Candidater avec un message facultatif
+POST http://localhost:3000/offers/3/applications
+Authorization: {{student.response.body.token}}
+Content-Type: application/json
+
+{ "message": "Je souhaite approfondir la conception d'API." }
+
+### Retirer sa candidature tant qu'elle est en cours
+DELETE http://localhost:3000/offers/3/applications
+Authorization: {{student.response.body.token}}

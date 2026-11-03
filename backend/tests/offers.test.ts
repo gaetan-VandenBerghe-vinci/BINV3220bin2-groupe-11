@@ -48,6 +48,7 @@ describe("GET /offers : visibilité selon le profil", () => {
       period: "P1",
       status: "ARCHIVED",
     });
+
   });
 
   describe("GET /offers : filtre par période", () => {
@@ -142,5 +143,75 @@ describe("GET /offers : visibilité selon le profil", () => {
     expect(Object.keys(response.body[0]).sort()).toEqual(
       ["academicYear", "companyShortName", "id", "period", "status", "title"],
     );
+  });
+});
+
+describe("EF-32 : candidatures étudiantes", () => {
+  it("permet de consulter une offre publiée et de candidater avec un message", async () => {
+    const token = tokenFor("STUDENT", STUDENT.LOUIS_CLAES);
+    const details = await request(app)
+      .get(`/offers/${OFFER.BILLING_API}`)
+      .set("Authorization", token);
+
+    expect(details.status).toBe(200);
+    expect(details.body.description).toContain("API");
+    expect(details.body.application).toBeNull();
+
+    const applied = await request(app)
+      .post(`/offers/${OFFER.BILLING_API}/applications`)
+      .set("Authorization", token)
+      .send({ message: "Mon message" });
+
+    expect(applied.status).toBe(201);
+    expect(applied.body).toEqual({ status: "IN_PROGRESS" });
+    expect(
+      (await request(app).get(`/offers/${OFFER.BILLING_API}`).set("Authorization", token)).body
+        .application.message,
+    ).toBe("Mon message");
+  });
+
+  it("permet le retrait puis une nouvelle candidature", async () => {
+    const token = tokenFor("STUDENT", STUDENT.LOUIS_CLAES);
+    await request(app)
+      .post(`/offers/${OFFER.BILLING_API}/applications`)
+      .set("Authorization", token)
+      .send({});
+
+    const withdrawn = await request(app)
+      .delete(`/offers/${OFFER.BILLING_API}/applications`)
+      .set("Authorization", token);
+    expect(withdrawn.status).toBe(204);
+
+    const reapplied = await request(app)
+      .post(`/offers/${OFFER.BILLING_API}/applications`)
+      .set("Authorization", token)
+      .send({});
+    expect(reapplied.status).toBe(201);
+  });
+
+  it("refuse les doublons, les offres non publiées et le retrait d'une candidature traitée", async () => {
+    const token = tokenFor("STUDENT", STUDENT.LUCAS_DUPONT);
+    const duplicate = await request(app)
+      .post(`/offers/${OFFER.FLEET_APP}/applications`)
+      .set("Authorization", token)
+      .send({});
+    expect(duplicate.status).toBe(409);
+
+    const unpublished = await request(app)
+      .get(`/offers/${OFFER.CLIENT_PORTAL}`)
+      .set("Authorization", token);
+    expect(unpublished.status).toBe(404);
+
+    const processed = await request(app)
+      .delete(`/offers/${OFFER.CLOUD_MIGRATION}/applications`)
+      .set("Authorization", tokenFor("STUDENT", STUDENT.MATEUSZ_KOWALSKI));
+    expect(processed.status).toBe(409);
+  });
+
+  it("réserve les opérations EF-32 aux étudiants", async () => {
+    const response = await request(app)
+      .get(`/offers/${OFFER.BILLING_API}`)
+      .set("Authorization", tokenFor("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ));
+    expect(response.status).toBe(403);
   });
 });
