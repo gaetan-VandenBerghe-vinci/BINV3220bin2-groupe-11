@@ -22,7 +22,10 @@ const parsePeriod = (value: unknown): PeriodCode | undefined => {
   return value;
 };
 
-const parseOfferId = (value: string): number => {
+const parseOfferId = (value: unknown): number => {
+  if (typeof value !== "string") {
+    throw new HttpError(400, "INVALID_PARAM", "L'identifiant de l'offre est invalide");
+  }
   const id = Number(value);
   if (!Number.isInteger(id) || id <= 0) {
     throw new HttpError(400, "INVALID_PARAM", "L'identifiant de l'offre est invalide");
