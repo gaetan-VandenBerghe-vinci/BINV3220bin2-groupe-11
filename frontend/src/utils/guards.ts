@@ -1,6 +1,12 @@
 import { COMPANY_STATUSES, type Company, type CompanyStatus } from "../models/company.ts";
 import type { Health } from "../models/health.ts";
-import { OFFER_STATUSES, PERIOD_CODES, type Offer } from "../models/offer.ts";
+import {
+  APPLICATION_STATUSES,
+  OFFER_STATUSES,
+  PERIOD_CODES,
+  type Offer,
+  type OfferDetails,
+} from "../models/offer.ts";
 import {
   CONTACT_ROLES,
   USER_KINDS,
@@ -64,3 +70,20 @@ export const isOffer = (value: unknown): value is Offer =>
 
 export const isOfferList = (value: unknown): value is Offer[] =>
   Array.isArray(value) && value.every(isOffer);
+
+const isApplication = (value: unknown): boolean => {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.id === "number" &&
+    (value.message === null || typeof value.message === "string") &&
+    isOneOf(APPLICATION_STATUSES, value.status) &&
+    typeof value.appliedAt === "string"
+  );
+};
+
+export const isOfferDetails = (value: unknown): value is OfferDetails =>
+  isRecord(value) &&
+  isOffer(value) &&
+  typeof value.description === "string" &&
+  "application" in value &&
+  (value.application === null || isApplication(value.application));

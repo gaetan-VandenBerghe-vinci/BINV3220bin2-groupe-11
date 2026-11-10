@@ -84,4 +84,68 @@ describe("OffersPage", () => {
 
     await waitFor(() => expect(onUnauthorized).toHaveBeenCalled());
   });
+
+  it("permet à un étudiant de consulter une offre et de candidater", async () => {
+    const fetchMock = stubFetch({
+      "/api/offers/2/applications": () => Response.json({ status: "IN_PROGRESS" }, { status: 201 }),
+      "/api/offers/2": () =>
+        Response.json({
+          ...offers[0],
+          description: "Concevoir une API de facturation.",
+          status: "PUBLISHED",
+          application: null,
+        }),
+      "/api/offers": () => Response.json([offers[0]]),
+    });
+
+    render(<OffersPage user={studentUser} token="jeton" onUnauthorized={vi.fn()} />);
+    expect(await screen.findByText("Refonte du portail client")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Détails" }));
+    expect(await screen.findByText("Concevoir une API de facturation.")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Message (facultatif)"), {
+      target: { value: "Ma motivation" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Candidater" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/offers/2/applications",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ message: "Ma motivation" }),
+        }),
+      ),
+    );
+  });
+
+  it("permet à un étudiant de retirer une candidature en cours", async () => {
+    const fetchMock = stubFetch({
+      "/api/offers/2/applications": () => new Response(null, { status: 204 }),
+      "/api/offers/2": () =>
+        Response.json({
+          ...offers[0],
+          description: "Description",
+          status: "PUBLISHED",
+          application: {
+            id: 1,
+            message: null,
+            status: "IN_PROGRESS",
+            appliedAt: "2026-10-01",
+          },
+        }),
+      "/api/offers": () => Response.json([offers[0]]),
+    });
+
+    render(<OffersPage user={studentUser} token="jeton" onUnauthorized={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Détails" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Retirer ma candidature" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/offers/2/applications",
+        expect.objectContaining({ method: "DELETE" }),
+      ),
+    );
+  });
 });
