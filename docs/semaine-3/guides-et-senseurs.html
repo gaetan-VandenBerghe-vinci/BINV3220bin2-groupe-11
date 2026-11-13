@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Inventaire des guides et senseurs du dépôt, classés selon leur nature et leur rôle."
+    />
+    <title>Guides et senseurs du dépôt</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1d2926;
+        --muted: #52645e;
+        --line: #cbd6d0;
+        --paper: #f5f8f5;
+        --surface: #ffffff;
+        --green: #17684f;
+        --green-soft: #e6f3eb;
+        --orange: #a34a24;
+        --orange-soft: #fff0e7;
+        --gray-soft: #edf1ef;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 17px;
+        line-height: 1.6;
+      }
+
+      a {
+        color: #075e50;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+        overflow-wrap: anywhere;
+      }
+
+      a:hover {
+        color: #a34a24;
+      }
+
+      a:focus-visible {
+        outline: 3px solid #d27b43;
+        outline-offset: 3px;
+      }
+
+      .page {
+        width: min(1120px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 48px 0 64px;
+      }
+
+      .kicker,
+      .eyebrow,
+      .status,
+      .category-label {
+        font-family: "Trebuchet MS", Arial, sans-serif;
+        letter-spacing: 0.04em;
+      }
+
+      .kicker {
+        margin: 0 0 10px;
+        color: var(--green);
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 760px;
+        margin-bottom: 12px;
+        font-size: clamp(36px, 5vw, 58px);
+        font-weight: 500;
+        line-height: 1.08;
+      }
+
+      .intro {
+        max-width: 760px;
+        margin-bottom: 26px;
+        color: var(--muted);
+        font-size: 19px;
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        margin: 30px 0 42px;
+      }
+
+      .summary-item {
+        padding: 17px 20px 17px 0;
+      }
+
+      .summary-item + .summary-item {
+        border-left: 1px solid var(--line);
+        padding-left: 20px;
+      }
+
+      .summary strong {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 20px;
+        font-weight: 500;
+      }
+
+      .summary span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      section {
+        margin-top: 42px;
+      }
+
+      h2 {
+        margin-bottom: 8px;
+        font-size: 30px;
+        font-weight: 500;
+        line-height: 1.2;
+      }
+
+      .section-lead {
+        max-width: 760px;
+        margin-bottom: 20px;
+        color: var(--muted);
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        background: var(--surface);
+      }
+
+      table {
+        width: 100%;
+        min-width: 760px;
+        border-collapse: collapse;
+        text-align: left;
+      }
+
+      th,
+      td {
+        padding: 20px;
+        vertical-align: top;
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+
+      tr:last-child th,
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      th:last-child,
+      td:last-child {
+        border-right: 0;
+      }
+
+      thead th {
+        background: #e9f0ec;
+        font-size: 19px;
+        font-weight: 500;
+      }
+
+      tbody th {
+        width: 175px;
+        background: #f1f5f2;
+        font-size: 19px;
+        font-weight: 500;
+      }
+
+      .category-label {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .mechanism-title {
+        margin: 0 0 8px;
+        font-size: 21px;
+        font-weight: 600;
+        line-height: 1.3;
+      }
+
+      .cell-copy {
+        margin: 0 0 12px;
+      }
+
+      .example {
+        margin: 12px 0;
+        padding-left: 13px;
+        border-left: 3px solid var(--green);
+      }
+
+      .status {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.4;
+        text-transform: uppercase;
+      }
+
+      .status.done {
+        background: var(--green-soft);
+        color: #14563f;
+      }
+
+      .status.configured {
+        background: var(--orange-soft);
+        color: #833a1b;
+      }
+
+      .status.absent {
+        background: var(--gray-soft);
+        color: #44524c;
+      }
+
+      .status-line {
+        margin: 14px 0 0;
+      }
+
+      .reference-list {
+        margin: 10px 0 0;
+        padding-left: 20px;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      .reference-list li + li {
+        margin-top: 5px;
+      }
+
+      .process-note {
+        display: grid;
+        grid-template-columns: minmax(180px, 0.7fr) 2fr;
+        gap: 24px;
+        padding: 22px 0;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .process-note h3 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 500;
+      }
+
+      .process-note p:last-child {
+        margin-bottom: 0;
+      }
+
+      .result-strip {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1px;
+        margin-top: 18px;
+        background: var(--line);
+        border: 1px solid var(--line);
+      }
+
+      .result-strip div {
+        min-height: 88px;
+        padding: 14px;
+        background: var(--surface);
+      }
+
+      .result-strip strong,
+      .result-strip span {
+        display: block;
+      }
+
+      .result-strip strong {
+        font-family: "Trebuchet MS", Arial, sans-serif;
+        font-size: 21px;
+      }
+
+      .result-strip span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .footnote {
+        margin-top: 28px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      @media (max-width: 700px) {
+        .page {
+          width: min(100% - 28px, 560px);
+          padding-top: 30px;
+        }
+
+        .summary {
+          grid-template-columns: 1fr;
+          margin: 24px 0 34px;
+        }
+
+        .summary-item,
+        .summary-item + .summary-item {
+          padding: 12px 0;
+          border-left: 0;
+        }
+
+        .summary-item + .summary-item {
+          border-top: 1px solid var(--line);
+        }
+
+        .process-note {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+
+        .result-strip {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        h2 {
+          font-size: 26px;
+        }
+      }
+
+      @media print {
+        body {
+          background: #fff;
+          font-size: 12pt;
+        }
+
+        .page {
+          width: 100%;
+          padding: 0;
+        }
+
+        .table-wrap {
+          overflow: visible;
+        }
+
+        table {
+          min-width: 0;
+        }
+
+        th,
+        td {
+          padding: 10px;
+        }
+
+        a {
+          color: inherit;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header>
+        <p class="kicker">Semaine 3 · Analyse du dépôt</p>
+        <h1>Guides et senseurs</h1>
+        <p class="intro">
+          Inventaire des consignes qui orientent le travail et des mécanismes qui contrôlent le code,
+          classés selon leur nature et leur rôle.
+        </p>
+        <div class="summary" aria-label="Résumé de l’inventaire">
+          <div class="summary-item">
+            <strong>2 guides classés</strong>
+            <span>instructions Copilot et règle de version Node dans la matrice</span>
+          </div>
+          <div class="summary-item">
+            <strong>1 pipeline vérifié</strong>
+            <span>lint, types, tests et builds exécutés pendant la séance</span>
+          </div>
+          <div class="summary-item">
+            <strong>0 senseur IA automatique</strong>
+            <span>aucune revue de code IA configurée dans le dépôt</span>
+          </div>
+        </div>
+      </header>
+
+      <section aria-labelledby="matrix-title">
+        <h2 id="matrix-title">Matrice des mécanismes</h2>
+        <p class="section-lead">
+          Un guide donne des consignes en amont (feedforward). Un senseur observe le code ou son
+          comportement et produit un retour (feedback). Les cases sans mécanisme réel sont indiquées
+          comme telles.
+        </p>
+        <div class="table-wrap" role="region" aria-label="Matrice des guides et senseurs" tabindex="0">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Nature</th>
+                <th scope="col">Guide — feedforward</th>
+                <th scope="col">Senseur — feedback</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">
+                  Inférentiel
+                  <span class="category-label">Consignes interprétées par une IA</span>
+                </th>
+                <td>
+                  <h3 class="mechanism-title">Instructions Copilot</h3>
+                  <p class="cell-copy">
+                    Le fichier <a href="../../.github/copilot-instructions.md">.github/copilot-instructions.md</a>
+                    guide l’agent sur l’architecture, les conventions et les validations du dépôt.
+                  </p>
+                  <p class="example">
+                    <strong>Exemple :</strong> lors d’un changement d’API, mettre à jour
+                    <a href="../../backend/API.md">backend/API.md</a> et les exemples
+                    <a href="../../backend/http/companies.http">backend/http/*.http</a>, puis ajouter
+                    des tests de succès et d’erreur.
+                  </p>
+                  <p class="status-line">
+                    <span class="status done">Consulté et appliqué pendant la séance</span>
+                  </p>
+                  <ul class="reference-list">
+                    <li><a href="../../.github/copilot-instructions.md">Consignes Copilot</a></li>
+                    <li><a href="../../backend/API.md">Contrat API</a></li>
+                  </ul>
+                </td>
+                <td>
+                  <h3 class="mechanism-title">Aucun mécanisme configuré</h3>
+                  <p class="cell-copy">
+                    Le dépôt ne contient pas de revue de code automatisée par IA. L’usage ponctuel de
+                    Copilot pour explorer les fichiers ne constitue pas un senseur du projet.
+                  </p>
+                  <p class="example">
+                    <strong>Exemple de résultat :</strong> sans outil de revue configuré, aucun rapport
+                    automatique de revue n’est produit.
+                  </p>
+                  <p class="status-line">
+                    <span class="status absent">Absent après inspection de .github</span>
+                  </p>
+                  <ul class="reference-list">
+                    <li><a href="../../.github/copilot-instructions.md">Instructions présentes</a></li>
+                    <li><a href="../../.github/pull_request_template.md">Modèle de PR présent</a></li>
+                  </ul>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">
+                  Computationnel
+                  <span class="category-label">Règles ou calculs exécutables</span>
+                </th>
+                <td>
+                  <h3 class="mechanism-title">Version Node.js attendue</h3>
+                  <p class="cell-copy">
+                    <a href="../../.nvmrc">.nvmrc</a> sélectionne Node 24; le champ
+                    <code>engines.node</code> dans <a href="../../package.json">package.json</a>
+                    exige Node <code>&gt;=22.14.0</code>.
+                  </p>
+                  <p class="example">
+                    <strong>Règle :</strong> le projet doit être exécuté avec une version compatible
+                    avec cette contrainte.
+                  </p>
+                  <p class="status-line">
+                    <span class="status configured">Configuré et consulté</span>
+                    <span class="category-label">Aucune commande de contrôle de version dédiée lancée.</span>
+                  </p>
+                  <ul class="reference-list">
+                    <li><a href="../../.nvmrc">Version conseillée par nvm</a></li>
+                    <li><a href="../../package.json">Contrainte engines et scripts</a></li>
+                  </ul>
+                </td>
+                <td>
+                  <h3 class="mechanism-title">Pipeline npm de validation</h3>
+                  <p class="cell-copy">
+                    La commande <code>npm run check</code> enchaîne Oxlint, les vérifications
+                    TypeScript, les tests Vitest et les builds backend/frontend.
+                  </p>
+                  <p class="example">
+                    <strong>Exemple de règle testée :</strong>
+                    <a href="../../backend/tests/db/constraints.test.ts">constraints.test.ts</a>
+                    vérifie que SQLite refuse une offre avec un statut inconnu ou un titre vide.
+                  </p>
+                  <p class="status-line">
+                    <span class="status done">Exécuté et réussi pendant la séance</span>
+                  </p>
+                  <ul class="reference-list">
+                    <li><a href="../../package.json">Pipeline npm racine</a></li>
+                    <li><a href="../../backend/package.json">Scripts backend</a></li>
+                    <li><a href="../../frontend/package.json">Scripts frontend</a></li>
+                    <li><a href="../../backend/tests/db/constraints.test.ts">Exemples de tests de contraintes</a></li>
+                  </ul>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="results-title">
+        <h2 id="results-title">Résultat de l’exécution</h2>
+        <p class="section-lead">
+          Le contrôle complet a été lancé depuis la racine avec <code>npm run check</code>. Les
+          quatre étapes ont réussi.
+        </p>
+        <div class="result-strip" aria-label="Résultats du pipeline">
+          <div><strong>OK</strong><span>Oxlint backend et frontend</span></div>
+          <div><strong>OK</strong><span>TypeScript backend et frontend</span></div>
+          <div><strong>168</strong><span>tests réussis : 119 backend, 49 frontend</span></div>
+          <div><strong>OK</strong><span>build backend et build Vite frontend</span></div>
+        </div>
+        <ul class="reference-list">
+          <li>Backend : 9 fichiers de test, 119 tests réussis.</li>
+          <li>Frontend : 7 fichiers de test, 49 tests réussis.</li>
+          <li>Les scripts concernés sont définis dans les deux fichiers <code>package.json</code> de workspace.</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="manual-title">
+        <h2 id="manual-title">Guide de processus et vérification manuelle</h2>
+        <div class="process-note">
+          <h3>Modèle de pull request</h3>
+          <div>
+            <p>
+              <a href="../../.github/pull_request_template.md">.github/pull_request_template.md</a>
+              fournit une checklist destinée à la personne qui prépare ou révise une PR. Il demande,
+              entre autres, de vérifier que <code>npm run check</code> passe, que les cas d’erreur sont
+              testés et que l’application a été essayée dans le navigateur avec les profils concernés.
+            </p>
+            <p>
+              <strong>Exemple :</strong> cocher « Testé dans le navigateur, avec les profils concernés ».
+              <span class="status configured">Checklist consultée; test navigateur non effectué pendant la séance</span>
+            </p>
+            <p>
+              C’est une consigne de processus interprétée par un humain, et non une case artificiellement
+              classée comme guide IA ou senseur computationnel.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="ci-title">
+        <h2 id="ci-title">Automatisation CI</h2>
+        <p class="section-lead">
+          Aucun workflow GitHub Actions n’a été trouvé dans le dossier <code>.github/</code> lors de
+          l’inspection. Le pipeline npm est disponible et a été exécuté manuellement pendant cette
+          séance, mais son déclenchement automatique par CI n’est pas configuré dans le dépôt.
+        </p>
+      </section>
+
+      <footer class="footnote">
+        <p>
+          <a href="guides-et-senseurs.md">Version Markdown de cet inventaire</a> · Les références
+          ouvrent les fichiers sources correspondants dans le dépôt.
+        </p>
+      </footer>
+    </main>
+  </body>
+</html>
