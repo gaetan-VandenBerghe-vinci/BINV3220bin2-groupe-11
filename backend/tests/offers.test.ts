@@ -189,6 +189,50 @@ describe("EF-32 : candidatures étudiantes", () => {
     expect(reapplied.status).toBe(201);
   });
 
+  it("retourne à chaque étudiant uniquement sa candidature et son statut", async () => {
+    const lucasDetails = await request(app)
+      .get(`/offers/${OFFER.FLEET_APP}`)
+      .set("Authorization", tokenFor("STUDENT", STUDENT.LUCAS_DUPONT));
+    const inesDetails = await request(app)
+      .get(`/offers/${OFFER.FLEET_APP}`)
+      .set("Authorization", tokenFor("STUDENT", STUDENT.INES_HADDAD));
+
+    expect(lucasDetails.status).toBe(200);
+    expect(lucasDetails.body.application).toMatchObject({
+      message: "Le développement React m'intéresse particulièrement.",
+      status: "IN_PROGRESS",
+    });
+    expect(inesDetails.status).toBe(200);
+    expect(inesDetails.body.application).toMatchObject({
+      message: null,
+      status: "IN_PROGRESS",
+    });
+    expect(inesDetails.body.application.id).not.toBe(lucasDetails.body.application.id);
+  });
+
+  it("accepte un message de 2 000 caractères et refuse un message plus long", async () => {
+    const token = tokenFor("STUDENT", STUDENT.LOUIS_CLAES);
+    const maximumMessage = "x".repeat(2000);
+    const accepted = await request(app)
+      .post(`/offers/${OFFER.BILLING_API}/applications`)
+      .set("Authorization", token)
+      .send({ message: maximumMessage });
+
+    expect(accepted.status).toBe(201);
+    const details = await request(app)
+      .get(`/offers/${OFFER.BILLING_API}`)
+      .set("Authorization", token);
+    expect(details.body.application.message).toHaveLength(2000);
+
+    const rejected = await request(app)
+      .post(`/offers/${OFFER.INTERNAL_CHATBOT}/applications`)
+      .set("Authorization", token)
+      .send({ message: `${maximumMessage}x` });
+
+    expect(rejected.status).toBe(400);
+    expect(rejected.body.error.code).toBe("INVALID_BODY");
+  });
+
   it("refuse les doublons, les offres non publiées et le retrait d'une candidature traitée", async () => {
     const token = tokenFor("STUDENT", STUDENT.LUCAS_DUPONT);
     const duplicate = await request(app)
@@ -202,16 +246,34 @@ describe("EF-32 : candidatures étudiantes", () => {
       .set("Authorization", token);
     expect(unpublished.status).toBe(404);
 
+    const applicationToUnpublished = await request(app)
+      .post(`/offers/${OFFER.CLIENT_PORTAL}/applications`)
+      .set("Authorization", token)
+      .send({});
+    expect(applicationToUnpublished.status).toBe(404);
+    expect(applicationToUnpublished.body.error.code).toBe("NOT_FOUND");
+
     const processed = await request(app)
       .delete(`/offers/${OFFER.CLOUD_MIGRATION}/applications`)
       .set("Authorization", tokenFor("STUDENT", STUDENT.MATEUSZ_KOWALSKI));
     expect(processed.status).toBe(409);
   });
 
-  it("réserve les opérations EF-32 aux étudiants", async () => {
-    const response = await request(app)
+  it("réserve le détail, la candidature et le retrait EF-32 aux étudiants", async () => {
+    const token = tokenFor("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ);
+    const details = await request(app)
       .get(`/offers/${OFFER.BILLING_API}`)
-      .set("Authorization", tokenFor("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ));
-    expect(response.status).toBe(403);
+      .set("Authorization", token);
+    const application = await request(app)
+      .post(`/offers/${OFFER.BILLING_API}/applications`)
+      .set("Authorization", token)
+      .send({});
+    const withdrawal = await request(app)
+      .delete(`/offers/${OFFER.BILLING_API}/applications`)
+      .set("Authorization", token);
+
+    expect(details.status).toBe(403);
+    expect(application.status).toBe(403);
+    expect(withdrawal.status).toBe(403);
   });
 });
