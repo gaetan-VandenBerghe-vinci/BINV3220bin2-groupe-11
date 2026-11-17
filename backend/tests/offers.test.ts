@@ -1,8 +1,9 @@
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
-import { ADMINISTRATOR, CONTACT, OFFER, STUDENT } from "../src/db/seed/seedIds.ts";
+import { ADMINISTRATOR, APPLICATION, CONTACT, OFFER, STUDENT } from "../src/db/seed/seedIds.ts";
 import type { UserKind } from "../src/models/user.ts";
 import { createTestApp, tokenFor } from "./helpers/testApp.ts";
+import { createTestDatabase } from "./helpers/testDatabase.ts";
 
 let app: ReturnType<typeof createTestApp>;
 
@@ -209,6 +210,28 @@ describe("EF-32 : candidatures étudiantes", () => {
     });
     expect(inesDetails.body.application.id).not.toBe(lucasDetails.body.application.id);
   });
+
+  it.each(["SELECTED", "REJECTED"] as const)(
+    "expose le statut traité %s dans le détail",
+    async (status) => {
+      const db = createTestDatabase();
+      db.prepare("UPDATE applications SET status = ? WHERE id = ?").run(
+        status,
+        APPLICATION.YOUSSEF_BILLING_API,
+      );
+      app = createTestApp(db);
+
+      const response = await request(app)
+        .get(`/offers/${OFFER.BILLING_API}`)
+        .set("Authorization", tokenFor("STUDENT", STUDENT.YOUSSEF_EL_AMRANI));
+
+      expect(response.status).toBe(200);
+      expect(response.body.application).toMatchObject({
+        status,
+        message: "Je souhaite approfondir la conception d'API.",
+      });
+    },
+  );
 
   it("accepte un message de 2 000 caractères et refuse un message plus long", async () => {
     const token = tokenFor("STUDENT", STUDENT.LOUIS_CLAES);

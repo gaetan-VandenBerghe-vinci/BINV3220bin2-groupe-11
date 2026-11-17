@@ -100,7 +100,7 @@ const OffersPage = ({ user, token, onUnauthorized }: OffersPageProps) => {
                         ? "En cours"
                         : selectedOffer.application.status === "SELECTED"
                           ? "Retenue"
-                          : "Refusée"}
+                          : "Non retenue"}
                     </p>
                     {selectedOffer.application.status === "IN_PROGRESS" && (
                       <button

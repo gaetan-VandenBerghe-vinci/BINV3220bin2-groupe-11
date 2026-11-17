@@ -148,4 +148,31 @@ describe("OffersPage", () => {
       ),
     );
   });
+
+  it.each([
+    ["SELECTED", "Retenue"],
+    ["REJECTED", "Non retenue"],
+  ] as const)("affiche le statut traité %s sans permettre le retrait", async (status, label) => {
+    stubFetch({
+      "/api/offers/2": () =>
+        Response.json({
+          ...offers[0],
+          description: "Description",
+          status: "PUBLISHED",
+          application: {
+            id: 1,
+            message: null,
+            status,
+            appliedAt: "2026-10-01",
+          },
+        }),
+      "/api/offers": () => Response.json([offers[0]]),
+    });
+
+    render(<OffersPage user={studentUser} token="jeton" onUnauthorized={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Détails" }));
+
+    expect(await screen.findByText(`Candidature : ${label}`)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Retirer ma candidature" })).not.toBeInTheDocument();
+  });
 });
