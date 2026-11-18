@@ -17,8 +17,12 @@ const visibilityFilter = (viewer: User): OfferFilter => {
 };
 
 export const createOffersService = (repository: OffersRepository) => ({
-  listOffers: (viewer: User, period?: OfferFilter["period"]): Offer[] =>
-    repository.findAll({ ...visibilityFilter(viewer), period }).map(toOffer),
+  listOffers: (
+    viewer: User,
+    period?: OfferFilter["period"],
+    search?: OfferFilter["search"],
+  ): Offer[] =>
+    repository.findAll({ ...visibilityFilter(viewer), period, search }).map(toOffer),
   getOfferDetails: (viewer: User, offerId: number) => {
     if (!isStudent(viewer)) {
       throw new HttpError(403, "FORBIDDEN", "Seuls les étudiants peuvent consulter ce détail");

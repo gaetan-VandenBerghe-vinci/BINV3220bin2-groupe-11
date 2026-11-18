@@ -1,0 +1,1 @@
+echo "Ceci est un fichier de démonstration, il ne doit pas être supprimé." > demo-protected.txt

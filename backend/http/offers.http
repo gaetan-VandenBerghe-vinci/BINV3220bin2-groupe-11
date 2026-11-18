@@ -42,6 +42,10 @@ Authorization: {{depositor.response.body.token}}
 GET http://localhost:3000/offers?period=P2
 Authorization: {{depositor.response.body.token}}
 
+### Offres contenant « API » dans le titre pour la période P2
+GET http://localhost:3000/offers?period=P2&q=API
+Authorization: {{depositor.response.body.token}}
+
 ### Erreur 403 : promotrice et signataire
 GET http://localhost:3000/offers
 Authorization: {{promoter.response.body.token}}

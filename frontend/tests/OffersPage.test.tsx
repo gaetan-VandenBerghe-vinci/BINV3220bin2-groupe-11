@@ -68,6 +68,47 @@ describe("OffersPage", () => {
     );
   });
 
+  it("transmet la recherche de titre normalisée avec la période sélectionnée", async () => {
+    const fetchMock = stubFetch({
+      "/api/offers?period=P2&q=API%20REST": () => Response.json([offers[0]]),
+      "/api/offers?period=P2": () => Response.json(offers),
+      "/api/offers": () => Response.json(offers),
+    });
+
+    render(<OffersPage user={contactUser} token="jeton" onUnauthorized={vi.fn()} />);
+    expect(await screen.findByText("2 offres")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Période"), { target: { value: "P2" } });
+    fireEvent.change(screen.getByLabelText("Rechercher par mot-clé"), {
+      target: { value: "  API REST  " },
+    });
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenLastCalledWith(
+        "/api/offers?period=P2&q=API+REST",
+        expect.anything(),
+      ),
+    );
+  });
+
+  it("affiche un message adapté quand la recherche ne correspond à aucune offre", async () => {
+    stubFetch({
+      "/api/offers?q=introuvable": () => Response.json([]),
+      "/api/offers": () => Response.json(offers),
+    });
+
+    render(<OffersPage user={contactUser} token="jeton" onUnauthorized={vi.fn()} />);
+    expect(await screen.findByText("2 offres")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Rechercher par mot-clé"), {
+      target: { value: "introuvable" },
+    });
+
+    expect(
+      await screen.findByText("Aucune offre ne correspond à votre recherche."),
+    ).toBeInTheDocument();
+  });
+
   it("affiche un refus d'accès renvoyé par le backend", async () => {
     stubFetch({ "/api/offers": () => new Response(null, { status: 403 }) });
 

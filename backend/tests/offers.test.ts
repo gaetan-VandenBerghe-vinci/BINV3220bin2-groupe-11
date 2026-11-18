@@ -99,6 +99,58 @@ describe("GET /offers : visibilité selon le profil", () => {
     });
   });
 
+  describe("GET /offers : recherche par titre", () => {
+    it("recherche une expression dans le titre sans tenir compte de la casse ni des espaces extérieurs", async () => {
+      const response = await request(app)
+        .get(`/offers?q=${encodeURIComponent("  API REST DE FACTURATION  ")}`)
+        .set("Authorization", tokenFor("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ));
+
+      expect(response.status).toBe(200);
+      expect(offerIds(response.body)).toEqual([OFFER.BILLING_API]);
+    });
+
+    it("recherche les mots comme une expression entière", async () => {
+      const response = await request(app)
+        .get(`/offers?q=${encodeURIComponent("API facturation")}`)
+        .set("Authorization", tokenFor("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ));
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
+    });
+
+    it("combine la recherche par titre avec le filtre par période", async () => {
+      const p1Response = await request(app)
+        .get("/offers?period=P1&q=API%20REST")
+        .set("Authorization", tokenFor("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ));
+      const p2Response = await request(app)
+        .get("/offers?period=P2&q=API%20REST")
+        .set("Authorization", tokenFor("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ));
+
+      expect(p1Response.status).toBe(200);
+      expect(p1Response.body).toEqual([]);
+      expect(p2Response.status).toBe(200);
+      expect(offerIds(p2Response.body)).toEqual([OFFER.BILLING_API]);
+    });
+
+    it("ignore une recherche vide et conserve la visibilité des étudiants", async () => {
+      const emptySearch = await request(app)
+        .get("/offers?q=%20%20")
+        .set("Authorization", tokenFor("STUDENT", STUDENT.LUCAS_DUPONT));
+      const unpublishedTitle = await request(app)
+        .get("/offers?q=client")
+        .set("Authorization", tokenFor("STUDENT", STUDENT.LUCAS_DUPONT));
+
+      expect(offerIds(emptySearch.body)).toEqual([
+        OFFER.INTERNAL_CHATBOT,
+        OFFER.DATA_QUALITY,
+        OFFER.FLEET_APP,
+        OFFER.BILLING_API,
+      ]);
+      expect(unpublishedTitle.status).toBe(200);
+      expect(unpublishedTitle.body).toEqual([]);
+    });
+  });
+
   it("ne montre que les offres publiées à un étudiant", async () => {
     const response = await listOffersAs("STUDENT", STUDENT.LUCAS_DUPONT);
 
