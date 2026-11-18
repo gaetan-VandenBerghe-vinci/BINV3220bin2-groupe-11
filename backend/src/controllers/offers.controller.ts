@@ -22,6 +22,15 @@ const parsePeriod = (value: unknown): PeriodCode | undefined => {
   return value;
 };
 
+const parseSearch = (value: unknown): string | undefined => {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string") {
+    throw new HttpError(400, "INVALID_QUERY", "Le paramètre q doit apparaître une seule fois");
+  }
+  const search = value.trim();
+  return search === "" ? undefined : search;
+};
+
 const parseOfferId = (value: unknown): number => {
   if (typeof value !== "string") {
     throw new HttpError(400, "INVALID_PARAM", "L'identifiant de l'offre est invalide");
@@ -53,7 +62,8 @@ export const createOffersRouter = (offersService: OffersService) => {
 
   router.get("/", authorize(canListOffers), (req, res) => {
     const period = parsePeriod(req.query.period);
-    res.json(offersService.listOffers(getCurrentUser(req), period).map(toOfferDto));
+    const search = parseSearch(req.query.q);
+    res.json(offersService.listOffers(getCurrentUser(req), period, search).map(toOfferDto));
   });
 
   router.get("/:offerId", authorize(canApplyToOffers), (req, res) => {

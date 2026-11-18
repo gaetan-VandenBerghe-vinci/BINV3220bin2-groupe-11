@@ -32,3 +32,10 @@ See [README.md](../README.md) for setup and troubleshooting, [docs/architecture.
 - Treat demo authentication as development-only. Do not weaken the production guard around `DEMO_AUTH_ENABLED`, and do not rely on frontend-only permission hiding.
 - When adding or changing an API route, update `backend/API.md` and the corresponding `backend/http/*.http` request examples. Add tests for successful behavior and relevant HTTP error cases.
 - Follow the repository pull request checklist in [.github/pull_request_template.md](./pull_request_template.md), including documentation and migration checks.
+
+
+Pour tout ajout de fonctionnalité ou correction de bug, lis et applique
+.github/skills/test-driven-development/SKILL.md avant de modifier le code
+de l’application. Écris et exécute les tests d’abord, présente-les, puis attends
+leur validation explicite avant l’implémentation. Cette règle ne concerne pas les
+demandes d’explication ou de documentation seules.
