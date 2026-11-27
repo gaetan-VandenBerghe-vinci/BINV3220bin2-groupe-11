@@ -1,8 +1,9 @@
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
-import { ADMINISTRATOR, CONTACT, OFFER, STUDENT } from "../src/db/seed/seedIds.ts";
+import { ADMINISTRATOR, APPLICATION, CONTACT, OFFER, STUDENT } from "../src/db/seed/seedIds.ts";
 import type { UserKind } from "../src/models/user.ts";
 import { createTestApp, tokenFor } from "./helpers/testApp.ts";
+import { createTestDatabase } from "./helpers/testDatabase.ts";
 
 let app: ReturnType<typeof createTestApp>;
 
@@ -95,6 +96,58 @@ describe("GET /offers : visibilité selon le profil", () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error.code).toBe("INVALID_QUERY");
+    });
+  });
+
+  describe("GET /offers : recherche par titre", () => {
+    it("recherche une expression dans le titre sans tenir compte de la casse ni des espaces extérieurs", async () => {
+      const response = await request(app)
+        .get(`/offers?q=${encodeURIComponent("  API REST DE FACTURATION  ")}`)
+        .set("Authorization", tokenFor("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ));
+
+      expect(response.status).toBe(200);
+      expect(offerIds(response.body)).toEqual([OFFER.BILLING_API]);
+    });
+
+    it("recherche les mots comme une expression entière", async () => {
+      const response = await request(app)
+        .get(`/offers?q=${encodeURIComponent("API facturation")}`)
+        .set("Authorization", tokenFor("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ));
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
+    });
+
+    it("combine la recherche par titre avec le filtre par période", async () => {
+      const p1Response = await request(app)
+        .get("/offers?period=P1&q=API%20REST")
+        .set("Authorization", tokenFor("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ));
+      const p2Response = await request(app)
+        .get("/offers?period=P2&q=API%20REST")
+        .set("Authorization", tokenFor("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ));
+
+      expect(p1Response.status).toBe(200);
+      expect(p1Response.body).toEqual([]);
+      expect(p2Response.status).toBe(200);
+      expect(offerIds(p2Response.body)).toEqual([OFFER.BILLING_API]);
+    });
+
+    it("ignore une recherche vide et conserve la visibilité des étudiants", async () => {
+      const emptySearch = await request(app)
+        .get("/offers?q=%20%20")
+        .set("Authorization", tokenFor("STUDENT", STUDENT.LUCAS_DUPONT));
+      const unpublishedTitle = await request(app)
+        .get("/offers?q=client")
+        .set("Authorization", tokenFor("STUDENT", STUDENT.LUCAS_DUPONT));
+
+      expect(offerIds(emptySearch.body)).toEqual([
+        OFFER.INTERNAL_CHATBOT,
+        OFFER.DATA_QUALITY,
+        OFFER.FLEET_APP,
+        OFFER.BILLING_API,
+      ]);
+      expect(unpublishedTitle.status).toBe(200);
+      expect(unpublishedTitle.body).toEqual([]);
     });
   });
 
@@ -209,6 +262,28 @@ describe("EF-32 : candidatures étudiantes", () => {
     });
     expect(inesDetails.body.application.id).not.toBe(lucasDetails.body.application.id);
   });
+
+  it.each(["SELECTED", "REJECTED"] as const)(
+    "expose le statut traité %s dans le détail",
+    async (status) => {
+      const db = createTestDatabase();
+      db.prepare("UPDATE applications SET status = ? WHERE id = ?").run(
+        status,
+        APPLICATION.YOUSSEF_BILLING_API,
+      );
+      app = createTestApp(db);
+
+      const response = await request(app)
+        .get(`/offers/${OFFER.BILLING_API}`)
+        .set("Authorization", tokenFor("STUDENT", STUDENT.YOUSSEF_EL_AMRANI));
+
+      expect(response.status).toBe(200);
+      expect(response.body.application).toMatchObject({
+        status,
+        message: "Je souhaite approfondir la conception d'API.",
+      });
+    },
+  );
 
   it("accepte un message de 2 000 caractères et refuse un message plus long", async () => {
     const token = tokenFor("STUDENT", STUDENT.LOUIS_CLAES);
